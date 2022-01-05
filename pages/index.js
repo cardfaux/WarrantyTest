@@ -1,10 +1,27 @@
-import { Heading, Page } from "@shopify/polaris";
+import { Router } from "next/dist/client/router";
+import { useState, useEffect } from "react";
+import EmptyHome from "../components/EmptyHome";
+import FAQList from "../components/FAQList";
 
-const Index = () => (
-  <Page>
-    <Heading>Shopify app with Node and React 🎉</Heading>
-    <h1>testing compile</h1>
-  </Page>
-);
+const Index = (props) => {
+  // useEffect(() => {
+  //   props.authAxios
+  //     .get(`/faq`)
+  //     .then((response) => {
+  //       console.log(response);
+  //     })
+  //     .catch((error) => {
+  //       console.log(error);
+  //       Router.push(`/`)
+  //     });
+  // }, []);
+
+  return (
+    <>
+      <EmptyHome />
+      <FAQList />
+    </>
+  );
+};
 
 export default Index;
