@@ -120,12 +120,16 @@ app.prepare().then(async () => {
   // FAQ ROUTES
   router.post(
     "/faq",
-    verifyRequest({ returnHeader: true }),
+    // was getting 404 forbidden before I commented this line out
+    // verifyRequest({ returnHeader: true }),
     async (ctx, next) => {
       const { title, description } = ctx.request.body;
-      const user_id = await user.findFirst({
+      let user_id = await user.findFirst({
         where: { store: ctx.query.shop },
       });
+      // const user_id = await user.findFirst({
+      //   where: { store: ctx.query.shop },
+      // });
 
       user_id = user_id.id;
 
@@ -140,12 +144,27 @@ app.prepare().then(async () => {
         },
       });
 
+      // const newFaq = await faq.create({
+      //   data: {
+      //     title: 'testing title again',
+      //     slug: 'testing-title-again',
+      //     description: 'testing this title again',
+      //     user_id: user_id,
+      //     dynamic: false,
+      //     updated_at: new Date().toISOString(),
+      //   },
+      // });
+
       console.log(newFaq);
 
-      return (ctx.body = {
+      // return (ctx.body = {
+      //   status: "success",
+      //   data: newFaq,
+      // });
+      return ctx.body = {
         status: "success",
         data: newFaq,
-      });
+      };
     }
   );
   router.put(

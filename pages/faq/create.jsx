@@ -25,9 +25,11 @@ const FAQCreate = (props) => {
   );
 
   const [titleValue, setTitleValue] = useState("");
+
   const handleTitleChange = (value) => setTitleValue(value);
 
   const [descriptionValue, setDescriptionValue] = useState("");
+  
   const handleDescriptionChange = (value) => setDescriptionValue(value);
 
   const handleChange = useCallback((newValue) => setValue(newValue), []);
@@ -36,8 +38,8 @@ const FAQCreate = (props) => {
     console.log("clickedBtn");
     props.authAxios
       .post("/faq", {
-        title: "testing title from client",
-        description: "test description from client",
+        title: "testing title from client again",
+        description: "test description from client again",
       })
       .then((response) => console.log(response))
       .catch((error) => console.log(error));
