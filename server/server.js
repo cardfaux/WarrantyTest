@@ -7,11 +7,12 @@ import Koa from "koa";
 import next from "next";
 import Router from "koa-router";
 import { PrismaClient } from "@prisma/client";
+import {storeCallback, loadCallback, deleteCallback} from './custom-sessions.js';
 import bodyParser from "koa-bodyparser";
 // const bodyParser = require("koa-bodyparser");
 import slugify from "slugify";
 
-const { user, faq } = new PrismaClient();
+const { user, faq, appSession } = new PrismaClient();
 
 dotenv.config();
 const port = parseInt(process.env.PORT, 10) || 8081;
@@ -29,7 +30,11 @@ Shopify.Context.initialize({
   API_VERSION: ApiVersion.October20,
   IS_EMBEDDED_APP: true,
   // This should be replaced with your preferred storage strategy
-  SESSION_STORAGE: new Shopify.Session.MemorySessionStorage(),
+  SESSION_STORAGE: new Shopify.Session.CustomSessionStorage(
+    storeCallback,
+    loadCallback,
+    deleteCallback
+  ),
 });
 
 // Storing the currently active shops in memory will force them to re-login when your server restarts. You should
@@ -46,18 +51,20 @@ app.prepare().then(async () => {
       async afterAuth(ctx) {
         // Access token and shop available in ctx.state.shopify
         const { shop, accessToken, scope } = ctx.state.shopify;
+        // console.log(ctx.state)
+        // console.log(ctx.state.shopify)
         const host = ctx.query.host;
         // ACTIVE_SHOPIFY_SHOPS[shop] = scope;
 
         const newUser = await user.upsert({
-          where: { store: shop },
+          where: { shop: shop },
           update: {
-            store: shop,
+            shop: shop,
             scope: scope,
             updated_at: new Date().toISOString(),
           },
           create: {
-            store: shop,
+            shop: shop,
             scope: scope,
             created_at: new Date().toISOString(),
           },
@@ -121,11 +128,11 @@ app.prepare().then(async () => {
   router.post(
     "/faq",
     // was getting 404 forbidden before I commented this line out
-    // verifyRequest({ returnHeader: true }),
+    verifyRequest({ returnHeader: true }),
     async (ctx, next) => {
       const { title, description } = ctx.request.body;
       let user_id = await user.findFirst({
-        where: { store: ctx.query.shop },
+        where: { shop: ctx.query.shop },
       });
       // const user_id = await user.findFirst({
       //   where: { store: ctx.query.shop },
@@ -136,7 +143,7 @@ app.prepare().then(async () => {
       const newFaq = await faq.create({
         data: {
           title: title,
-          slug: slugify(title, "_"),
+          slug: slugify(title, "-"),
           description: description,
           user_id: user_id,
           dynamic: false,
@@ -190,9 +197,9 @@ app.prepare().then(async () => {
     // console.log('ACTIVE_SHOPIFY_SHOPS');
     // console.log(ACTIVE_SHOPIFY_SHOPS);
 
-    const checkShop = await user.findFirst({
-      where: { store: shop },
-    });
+    const checkShop = await appSession.findFirst({
+      where: { shop: shop}
+    })
 
     // This shop hasn't been seen yet, go through OAuth to create a session
     // if (ACTIVE_SHOPIFY_SHOPS[shop] === undefined) {

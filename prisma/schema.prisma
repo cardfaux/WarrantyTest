@@ -12,22 +12,22 @@ datasource db {
 
 model user {
   id         Int      @id @default(autoincrement())
-  store      String   @unique(map: "User_store_key")
+  shop       String   @unique(map: "User_shop_key")
   scope      String
   plan       plan?    @relation(fields: [plan_id], references: [id])
   plan_id    Int?
-  faqs       faq[]
+  faq        faq[]
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@index([store])
+  @@index([shop])
 }
 
 model plan {
   id         Int      @id @default(autoincrement())
   title      String
   slug       String   @unique(map: "Plan_slug_key")
-  users      user[]
+  user       user[]
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
@@ -60,6 +60,14 @@ model question {
   updated_at DateTime @updatedAt
 
   @@index([id])
+}
+
+model AppSession {
+  id      String @id
+  shop    String
+  payload Json
+
+  @@map("app_session")
 }
 
 // model Post {
