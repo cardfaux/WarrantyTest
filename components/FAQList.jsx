@@ -1,9 +1,15 @@
 import { useState, useCallback } from "react";
 import { Page, Card, Layout, DataTable, Link } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
+import { useRouter } from "next/router";
 
 const FAQList = (props) => {
+  const router = useRouter();
   const [sortedRows, setSortedRows] = useState(null);
+
+  const clickedCreatedBtn = () => {
+    router.push('/faq/create');
+  }
 
   const initiallySortedRows = [
     [
@@ -26,7 +32,7 @@ const FAQList = (props) => {
     <Page
       fullWidth
       title="All FAQs"
-      primaryAction={{ content: "Create" }}
+      primaryAction={{ content: "Create", onAction: () => clickedCreatedBtn() }}
       // secondaryActions={[{ content: "Export" }]}
       pagination={{
         hasNext: true,

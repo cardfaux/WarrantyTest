@@ -6,27 +6,27 @@ import {
   FormLayout,
   TextField,
   Form,
+  Button,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { useRouter } from "next/router";
 
-const FAQCreate = (props) => {
+const QACreatePage = (props) => {
   const router = useRouter();
   const [titleValue, setTitleValue] = useState('');
   const handleTitleChange = (value) => setTitleValue(value);
 
-  const [descriptionValue, setDescriptionValue] = useState('');
-  const handleDescriptionChange = (value) => setDescriptionValue(value);
+  const [answerValue, setAnswerValue] = useState('');
+  const handleAnswerChange = (value) => setAnswerValue(value);
 
   const clickedNextBtn = () => {
-    props.authAxios.post('/faq', {
+    props.authAxios.post(`/faq/${props.faqEditId}/qa`, {
       title: titleValue,
-      description: descriptionValue,
-      status: 'draft'
+      answer: answerValue
     })
     .then((response) => {
       console.log(response)
-      router.push(`/faq/${response.data.data.id}/edit`)
+      router.push(`/faq/${props.faqEditId}/edit`)
     })
     .catch((error) => console.log(error))
   }
@@ -34,10 +34,10 @@ const FAQCreate = (props) => {
   return (
     <Page
       breadcrumbs={[{ content: "Back", onAction: () => clickedBackBtn() }]}
-      title="Create FAQ"
+      title="Create Question and Answer"
       primaryAction={{ content: "Next", disabled: false, onAction: () => clickedNextBtn() }}
     >
-      <TitleBar title="Create FAQ" />
+      <TitleBar title="Create Question and Answer" />
       <Layout>
         <Layout.Section>
           <Card sectioned>
@@ -45,20 +45,19 @@ const FAQCreate = (props) => {
               <FormLayout>
                 <TextField
                   onChange={handleTitleChange}
-                  label="Title"
+                  label="Question"
                   type="text"
                   value={titleValue}
                   helpText={
                     <span>
-                      We’ll use this email address to inform you on future
-                      changes to Polaris.
+                      Add question that you will answer
                     </span>
                   }
                 />
                 <TextField
-                  label="Description"
-                  value={descriptionValue}
-                  onChange={handleDescriptionChange}
+                  label="Answer"
+                  value={answerValue}
+                  onChange={handleAnswerChange}
                   multiline={4}
                   autoComplete="off"
                 />
@@ -72,4 +71,9 @@ const FAQCreate = (props) => {
   );
 };
 
-export default FAQCreate;
+
+QACreatePage.getInitialProps = async (ctx) => {
+  return { faqEditId: ctx.query.faqEditId };
+};
+
+export default QACreatePage;

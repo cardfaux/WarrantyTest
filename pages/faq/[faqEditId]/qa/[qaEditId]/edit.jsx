@@ -1,18 +1,20 @@
 import { useState, useCallback } from "react";
 import {
+  Heading,
   Page,
   Card,
   Layout,
-  Form,
-  TextField,
   FormLayout,
+  TextField,
+  EmptyState,
+  DataTable,
+  rows,
+  Form,
   Button,
-  Select,
 } from "@shopify/polaris";
-import { TitleBar } from "@shopify/app-bridge-react";
-import QAListSection from "../../../components/QAListSection";
+import { Provider, TitleBar } from "@shopify/app-bridge-react";
 
-const FAQEdit = (props) => {
+const QAEdit = (props) => {
   const [newsletter, setNewsletter] = useState(false);
   const [email, setEmail] = useState("");
 
@@ -27,49 +29,37 @@ const FAQEdit = (props) => {
   );
 
   const handleEmailChange = useCallback((value) => setEmail(value), []);
-
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState('1776 Barnes Street\nOrlando, FL 32801');
 
   const handleChange = useCallback((newValue) => setValue(newValue), []);
-
-  const [selected, setSelected] = useState("draft");
-
-  const handleSelectChange = useCallback((value) => setSelected(value), []);
-
-  const options = [
-    { label: "Active", value: "active" },
-    { label: "Draft", value: "draft" },
-  ];
-
   return (
     <Page
       breadcrumbs={[{ content: "Back", url: "/" }]}
-      title="Edit FAQ"
-      primaryAction={{ content: "Next", disabled: false }}
+      title="Edit Question and Answer"
+      primaryAction={{ content: "Save", disabled: false }}
     >
-      <TitleBar title="Edit FAQ" />
-      {/* <Heading>Shopify app with Node and React 🎉</Heading> */}
-      <Layout>
-        <Layout.Section></Layout.Section>
-      </Layout>
-
+      <TitleBar title="Create Question and Answer" />
       <Layout>
         <Layout.Section>
-          <Card title="FAQ INFO" sectioned>
+          <Card sectioned>
             <Form onSubmit={handleSubmit}>
               <FormLayout>
                 <TextField
                   value={email}
                   onChange={handleEmailChange}
-                  label="Title"
+                  label="Question"
                   type="email"
                   autoComplete="email"
-                  helpText={<span>Put your FAQ Title Here</span>}
+                  helpText={
+                    <span>
+                      We’ll use this email address to inform you on future
+                      changes to Polaris.
+                    </span>
+                  }
                 />
-
                 <TextField
-                  label="Description"
-                  value={value}
+                  label="Answer"
+                  value={""}
                   onChange={handleChange}
                   multiline={4}
                   autoComplete="off"
@@ -79,20 +69,10 @@ const FAQEdit = (props) => {
               </FormLayout>
             </Form>
           </Card>
-          <QAListSection />
-        </Layout.Section>
-        <Layout.Section secondary>
-          <Card title="Status" sectioned>
-            <Select
-              options={options}
-              onChange={handleSelectChange}
-              value={selected}
-            />
-          </Card>
         </Layout.Section>
       </Layout>
     </Page>
   );
 };
 
-export default FAQEdit;
+export default QAEdit;

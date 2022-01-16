@@ -125,12 +125,13 @@ app.prepare().then(async () => {
   );
 
   // FAQ ROUTES
+  // SAVE SINGLE FAQ
   router.post(
     "/faq",
     // was getting 404 forbidden before I commented this line out
     verifyRequest({ returnHeader: true }),
     async (ctx, next) => {
-      const { title, description } = ctx.request.body;
+      const { title, description, status } = ctx.request.body;
       let user_id = await user.findFirst({
         where: { shop: ctx.query.shop },
       });
@@ -145,6 +146,7 @@ app.prepare().then(async () => {
           title: title,
           slug: slugify(title, "-"),
           description: description,
+          status: status,
           user_id: user_id,
           dynamic: false,
           updated_at: new Date().toISOString(),
@@ -174,18 +176,94 @@ app.prepare().then(async () => {
       };
     }
   );
-  router.put(
-    "/faq/:id",
+  //GET SINGLE FAQ
+  router.get(
+    "/faq/:faqId",
     verifyRequest({ returnHeader: true }),
     async (ctx, next) => {
-      await Shopify.Utils.graphqlProxy(ctx.req, ctx.res);
+      try {
+        let results = await faq.findFirst({
+          where: { id: parseInt(ctx.params.faqId)}
+        })
+
+        return ctx.body = {
+          status: 'success',
+          data: results
+        }
+      } catch (error) {
+        console.log(error)
+        return ctx.body = {
+          status: 'error',
+          message: 'FAQ not found'
+        }
+      }
+      
     }
   );
-  router.del(
-    "/faq/:id",
+  //UPDATE SINGLE FAQ
+  router.put(
+    "/faq/:faqId",
     verifyRequest({ returnHeader: true }),
     async (ctx, next) => {
-      await Shopify.Utils.graphqlProxy(ctx.req, ctx.res);
+      try {
+        const {title, description, status} = ctx.request.body;
+      let user_id = await user.findFirst({
+        where: { shop: ctx.query.shop}
+      })
+      user_id = user_id.id
+      
+
+      const newFaq = await faq.update({
+        where: {
+          id: parseInt(ctx.params.faqId)
+        },
+        data: {
+          title: title,
+          slug: slugify(title, '-'),
+          description: description,
+          status: status,
+          user_id: user_id,
+          dynamic: false,
+          updated_at: new Date().toISOString()
+        },
+      })
+
+      return ctx.body = {
+        status: 'success',
+        data: newFaq
+      }
+      } catch (error) {
+        console.log(error)
+        return ctx.body = {
+          status: 'error',
+          message: "Error Can't Edit FAQ"
+        }
+      }
+    }
+  );
+  //DELETE SINGLE FAQ
+  router.del(
+    "/faq/:faqId",
+    verifyRequest({ returnHeader: true }),
+    async (ctx, next) => {
+      try {
+        const delFaq = await faq.delete({
+          where: {
+            id: parseInt(ctx.params.faqId)
+          }
+        })
+  
+        return ctx.body = {
+          status: 'success',
+          data: delFaq
+        }
+      } catch (error) {
+        console.log(error)
+        return ctx.body = {
+          status: 'error',
+          message: "Error Can't Delete FAQ"
+        }
+      }
     }
   );
 
