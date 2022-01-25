@@ -34,17 +34,31 @@ function userLoggedInFetch(app) {
 
 function MyProvider(props) {
   const app = useAppBridge();
-  // getSessionToken(app).then((token) => console.log("token = ", token));
-
+  
+  
   const authAxios = axios.create();
 
   authAxios.interceptors.request.use((config) => {
-    return getSessionToken(app).then((token) => {
-      // console.log(token);
+    return getSessionToken(app)
+    .then((token) => {
+      // console.log(token)
       config.headers["Authorization"] = `Bearer ${token}`;
       return config;
-    });
-  });
+    })
+  })
+
+  authAxios.interceptors.response.use((response) => {
+    return response
+  }, async function (error) {
+    const originalRequest = error.config;
+
+    if(error.response.status === 403 && !originalRequest._retry) {
+      console.log('HIT ERROR')
+      const redirect = Redirect.create(app)
+      redirect.dispatch(Redirect.Action.APP, '/auth' || '/auth')
+    }
+    return Promise.reject(error)
+  })
 
   const client = new ApolloClient({
     fetch: userLoggedInFetch(app),
@@ -96,3 +110,10 @@ MyApp.getInitialProps = async (appContext) => {
 // };
 
 export default MyApp;
+
+
+{/* <AppBridgeWithShopify>
+  <GraphqlConnection>
+    <Component></Component>
+  </GraphqlConnection>
+</AppBridgeWithShopify> */}

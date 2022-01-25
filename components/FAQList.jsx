@@ -1,61 +1,80 @@
 import { useState, useCallback } from "react";
-import { Page, Card, Layout, DataTable, Link } from "@shopify/polaris";
-import { TitleBar } from "@shopify/app-bridge-react";
+import {
+  Page,
+  Card,
+  Layout,
+  DataTable
+} from "@shopify/polaris";
+import Link from 'next/link';
+import { Provider, TitleBar } from "@shopify/app-bridge-react";
 import { useRouter } from "next/router";
 
 const FAQList = (props) => {
   const router = useRouter();
   const [sortedRows, setSortedRows] = useState(null);
-
-  const clickedCreatedBtn = () => {
-    router.push('/faq/create');
+  
+  const clickedCreateBtn = () => {
+    router.push('/faq/create')
   }
-
-  const initiallySortedRows = [
-    [
-      <Link removeUnderline url="/faq/1" key="emerald-silk-gown">
-        About Page FAQ
-      </Link>,
-      "Dynamic",
-      "12-04-2021",
-      "12-04-2021",
-    ],
-  ];
+  const initiallySortedRows = props.FAQData.map((item) => {
+    
+      return [
+        <Link
+          href={`/faq/${item.id}/edit`}
+          key={item.slug}
+        >
+          {item.title}
+        </Link>,
+        (item.status) ? 'Dynamic' : 'fixed',
+        `${item.created_at}`,
+        `${item.updated_at}`,
+      ]
+    }
+  );
+ 
 
   const rows = sortedRows ? sortedRows : initiallySortedRows;
   const handleSort = useCallback(
     (index, direction) => setSortedRows(sortCurrency(rows, index, direction)),
-    [rows]
+    [rows],
   );
-
   return (
     <Page
-      fullWidth
-      title="All FAQs"
-      primaryAction={{ content: "Create", onAction: () => clickedCreatedBtn() }}
-      // secondaryActions={[{ content: "Export" }]}
-      pagination={{
-        hasNext: true,
-      }}
+    title="All FAQs"
+    primaryAction={{content: 'Create', onAction: () => clickedCreateBtn() }}
+    // secondaryActions={[{content: 'Export'}]}
+    pagination={{
+      hasNext: true,
+    }}
     >
       <TitleBar title="Homepage" />
-      {/* <Heading>Shopify app with Node and React 🎉</Heading> */}
       <Layout>
-        <Layout.Section>
-          <Card>
+          <Layout.Section>
+            <Card>
             <DataTable
-              columnContentTypes={["text", "text", "text", "text"]}
-              headings={["Title", "Type", "Created", "Updated"]}
-              rows={rows}
-              sortable={[false, true, false, false, true]}
-              defaultSortDirection="descending"
-              initialSortColumnIndex={4}
-              onSort={handleSort}
-              footerContent={`Showing ${rows.length} of ${rows.length} results`}
-            />
-          </Card>
-        </Layout.Section>
-      </Layout>
+          columnContentTypes={[
+            'text',
+            'numeric',
+            'numeric',
+            'numeric',
+            'numeric',
+          ]}
+          headings={[
+            'Title',
+            'Type',
+            'Created',
+            'Updated',
+          ]}
+          rows={rows}
+          sortable={[false, true, false, false, true]}
+          defaultSortDirection="descending"
+          initialSortColumnIndex={4}
+          onSort={handleSort}
+          footerContent={`Showing ${rows.length} of ${rows.length} results`}
+        />
+            </Card>
+          </Layout.Section>
+        </Layout>
     </Page>
   );
 };

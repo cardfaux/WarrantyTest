@@ -125,55 +125,77 @@ app.prepare().then(async () => {
   );
 
   // FAQ ROUTES
+  // GET ALL FAQ
+  router.get(
+    "/faq",
+    verifyRequest({ returnHeader: true }),
+    async (ctx, next) => {
+      try {
+      let user_id = await user.findFirst({
+        where: { shop: ctx.query.shop}
+      })
+      user_id = user_id.id
+      
+      const response = await faq.findMany({
+        where: {
+          user_id: user_id
+        },
+        orderBy: {
+          created_at: 'desc'
+        }
+      })
+
+      return ctx.body = {
+        status: 'success',
+        data: response
+      }
+      } catch (error) {
+        console.log(error)
+        return ctx.body = {
+          status: 'error',
+          message: `FAQ can't be found`
+        }
+      }
+    }
+  );
   // SAVE SINGLE FAQ
   router.post(
     "/faq",
-    // was getting 404 forbidden before I commented this line out
     verifyRequest({ returnHeader: true }),
     async (ctx, next) => {
-      const { title, description, status } = ctx.request.body;
+      try {
+        const {title, description, status} = ctx.request.body;
       let user_id = await user.findFirst({
-        where: { shop: ctx.query.shop },
-      });
-      // const user_id = await user.findFirst({
-      //   where: { store: ctx.query.shop },
-      // });
-
-      user_id = user_id.id;
+        where: { shop: ctx.query.shop}
+      })
+      user_id = user_id.id
+      
 
       const newFaq = await faq.create({
         data: {
           title: title,
-          slug: slugify(title, "-"),
+          slug: slugify(title, '-'),
           description: description,
           status: status,
           user_id: user_id,
           dynamic: false,
-          updated_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         },
-      });
+      })
 
-      // const newFaq = await faq.create({
-      //   data: {
-      //     title: 'testing title again',
-      //     slug: 'testing-title-again',
-      //     description: 'testing this title again',
-      //     user_id: user_id,
-      //     dynamic: false,
-      //     updated_at: new Date().toISOString(),
-      //   },
-      // });
-
-      console.log(newFaq);
-
-      // return (ctx.body = {
-      //   status: "success",
-      //   data: newFaq,
-      // });
       return ctx.body = {
-        status: "success",
-        data: newFaq,
-      };
+        status: 'success',
+        data: newFaq
+      }
+      } catch (error) {
+        console.log(error)
+        return ctx.body = {
+          status: 'error',
+          message: `FAQ can't be safed`
+        }
+      }
+      
+      console.log(newFaq)
     }
   );
   //GET SINGLE FAQ
