@@ -6,6 +6,7 @@ import {
   FormLayout,
   TextField,
   Form,
+  Button,
   Select,
   Toast,
   Frame,
@@ -41,7 +42,7 @@ const FAQEditPage = (props) => {
       })
       .catch((error) => {
         console.log(error)
-        // router.push(`/`)
+        router.push(`/`)
       });
 
       props.authAxios
@@ -53,7 +54,7 @@ const FAQEditPage = (props) => {
       })
       .catch((error) => {
         console.log(error)
-        // router.push(`/`)
+        router.push(`/`)
       });
 
 

@@ -6,13 +6,13 @@ import Shopify, { ApiVersion } from "@shopify/shopify-api";
 import Koa from "koa";
 import next from "next";
 import Router from "koa-router";
-import { PrismaClient } from "@prisma/client";
+import {PrismaClient} from '@prisma/client';
 import {storeCallback, loadCallback, deleteCallback} from './custom-sessions.js';
-import bodyParser from "koa-bodyparser";
-// const bodyParser = require("koa-bodyparser");
+import bodyParser from 'koa-bodyparser';
 import slugify from "slugify";
 
-const { user, faq, appSession } = new PrismaClient();
+
+const  {user, faq, question, appSession} = new PrismaClient(); 
 
 dotenv.config();
 const port = parseInt(process.env.PORT, 10) || 8081;
@@ -26,6 +26,7 @@ Shopify.Context.initialize({
   API_KEY: process.env.SHOPIFY_API_KEY,
   API_SECRET_KEY: process.env.SHOPIFY_API_SECRET,
   SCOPES: process.env.SCOPES.split(","),
+  //HOST_NAME: process.env.HOSTLOCAL.replace(/https:\/\//, ""),
   HOST_NAME: process.env.HOST.replace(/https:\/\//, ""),
   API_VERSION: ApiVersion.October20,
   IS_EMBEDDED_APP: true,
@@ -57,36 +58,18 @@ app.prepare().then(async () => {
         // ACTIVE_SHOPIFY_SHOPS[shop] = scope;
 
         const newUser = await user.upsert({
-          where: { shop: shop },
-          update: {
-            shop: shop,
-            scope: scope,
-            updated_at: new Date().toISOString(),
-          },
-          create: {
-            shop: shop,
-            scope: scope,
-            created_at: new Date().toISOString(),
-          },
-        });
+          where:{ shop: shop},
+          update: {shop: shop, scope: scope, updated_at: new Date().toISOString()},
+          create: {shop: shop, scope: scope, updated_at: new Date().toISOString()}
+        })
 
-        // const response = await Shopify.Webhooks.Registry.register({
-        //   shop,
-        //   accessToken,
-        //   path: "/webhooks",
-        //   topic: "APP_UNINSTALLED",
-        //   webhookHandler: async (topic, shop, body) =>
-        //     delete ACTIVE_SHOPIFY_SHOPS[shop],
-        // });
         const response = await Shopify.Webhooks.Registry.register({
           shop,
           accessToken,
           path: "/webhooks",
           topic: "APP_UNINSTALLED",
-          webhookHandler: async (topic, shop, body) =>
-            await user.delete({
-              where: { shop: shop },
-            }),
+          webhookHandler: async (shop) =>
+            await user.delete({where: {shop: shop}}),
         });
 
         if (!response.success) {
@@ -124,7 +107,7 @@ app.prepare().then(async () => {
     }
   );
 
-  // FAQ ROUTES
+  // FAQ Routes
   // GET ALL FAQ
   router.get(
     "/faq",
@@ -153,9 +136,11 @@ app.prepare().then(async () => {
         console.log(error)
         return ctx.body = {
           status: 'error',
-          message: `FAQ can't be found`
+          message: `FAQ can't be safed`
         }
       }
+      
+      console.log(newFaq)
     }
   );
   // SAVE SINGLE FAQ
@@ -289,24 +274,184 @@ app.prepare().then(async () => {
     }
   );
 
+
+  // QA Routes
+  // GET ALL QA
+  router.get(
+    "/faq/:faqId/qa",
+    verifyRequest({ returnHeader: true }),
+    async (ctx, next) => {
+      try {
+      let user_id = await user.findFirst({
+        where: { shop: ctx.query.shop}
+      })
+      user_id = user_id.id
+      
+      const response = await question.findMany({
+        where: {
+          faq_id: parseInt(ctx.params.faqId)
+        },
+        orderBy: {
+          created_at: 'desc'
+        }
+      })
+      console.log(response, 'response')
+      return ctx.body = {
+        status: 'success',
+        data: response
+      }
+      } catch (error) {
+        console.log(error)
+        return ctx.body = {
+          status: 'error',
+          message: `FAQ can't be safed`
+        }
+      }
+      
+      console.log(newFaq)
+    }
+  );
+  // SAVE SINGLE QA
+  router.post(
+    "/faq/:faqId/qa",
+    verifyRequest({ returnHeader: true }),
+    async (ctx, next) => {
+      try {
+        const {title, answer} = ctx.request.body;
+      let user_id = await user.findFirst({
+        where: { shop: ctx.query.shop}
+      })
+      user_id = user_id.id
+      
+
+      const newQA = await question.create({
+        data: {
+          title: title,
+          answer: answer,
+          user: { connect: { id: user_id } },
+          faq: { connect: { id: parseInt(ctx.params.faqId) } },
+          views: 0,
+          updated_at: new Date().toISOString()
+        },
+      })
+
+      return ctx.body = {
+        status: 'success',
+        data: newQA
+      }
+      } catch (error) {
+        console.log(error)
+        return ctx.body = {
+          status: 'error',
+          message: `QA can't be saved`
+        }
+      }
+      
+      console.log(newFaq)
+    }
+  );
+  //GET SINGLE FAQ
+  router.get(
+    "/faq/:faqId/qa/:qaId",
+    verifyRequest({ returnHeader: true }),
+    async (ctx, next) => {
+      try {
+        let results = await question.findFirst({
+          where: { id: parseInt(ctx.params.qaId)}
+        })
+
+        return ctx.body = {
+          status: 'success',
+          data: results
+        }
+      } catch (error) {
+        console.log(error)
+        return ctx.body = {
+          status: 'error',
+          message: 'QA not found'
+        }
+      }
+      
+    }
+  );
+  //UPDATE SINGLE FAQ
+  router.put(
+    "/faq/:faqId/qa/:qaId",
+    verifyRequest({ returnHeader: true }),
+    async (ctx, next) => {
+      try {
+        const {title, answer} = ctx.request.body;
+      let user_id = await user.findFirst({
+        where: { shop: ctx.query.shop}
+      })
+      user_id = user_id.id
+      
+
+      const updateQa = await question.update({
+        where: {
+          id: parseInt(ctx.params.qaId)
+        },
+        data: {
+          title: title,
+          answer: answer,
+          user_id: user_id,
+          views: 0,
+          updated_at: new Date().toISOString()
+        },
+      })
+
+      return ctx.body = {
+        status: 'success',
+        data: updateQa
+      }
+      } catch (error) {
+        console.log(error)
+        return ctx.body = {
+          status: 'error',
+          message: "Error Can't Edit FAQ"
+        }
+      }
+    }
+  );
+  //DELETE SINGLE FAQ
+  router.del(
+    "/faq/:faqId/qa/:qaId",
+    verifyRequest({ returnHeader: true }),
+    async (ctx, next) => {
+      try {
+        const delQa = await question.delete({
+          where: {
+            id: parseInt(ctx.params.qaId)
+          }
+        })
+  
+        return ctx.body = {
+          status: 'success',
+          data: delQa
+        }
+      } catch (error) {
+        console.log(error)
+        return ctx.body = {
+          status: 'error',
+          message: "Error Can't Delete FAQ"
+        }
+      }
+    }
+  );
+
+
   router.get("(/_next/static/.*)", handleRequest); // Static content is clear
   router.get("/_next/webpack-hmr", handleRequest); // Webpack content is clear
   router.get("(.*)", async (ctx) => {
     const shop = ctx.query.shop;
-
-    // console.log('ACTIVE_SHOPIFY_SHOPS');
-    // console.log(ACTIVE_SHOPIFY_SHOPS);
+    // console.log('ACTIVE_SHOPIFY_SHOPS')
+    // console.log(ACTIVE_SHOPIFY_SHOPS)
 
     const checkShop = await appSession.findFirst({
       where: { shop: shop}
     })
 
     // This shop hasn't been seen yet, go through OAuth to create a session
-    // if (ACTIVE_SHOPIFY_SHOPS[shop] === undefined) {
-    //   ctx.redirect(`/auth?shop=${shop}`);
-    // } else {
-    //   await handleRequest(ctx);
-    // }
     if (checkShop === null) {
       ctx.redirect(`/auth?shop=${shop}`);
     } else {
